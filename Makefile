@@ -2,22 +2,29 @@ SC_OBJ := shellcode
 TST_OBJ :=stack_test
 TST_SC := get_shellcode
 
+CC ?= gcc
+OBJDUMP ?= objdump
+CFLAGS ?= -g -z execstack -fno-stack-protector
+
 all: $(TST_OBJ) $(TST_SC)
 
-$(TST_OBJ): stack_test.c
-	gcc -g -z execstack $^ -fno-stack-protector -o $@
-	objdump -axd $@ > $@.s
+%.o: %.c
+	$(CC) -c $(CFLAGS) $^ -o $@
 
-$(SC_OBJ): shellcode.c
-	gcc -static  $^ -o $@
-	objdump -saxd $@ > $@.s
+$(TST_OBJ): $(TST_OBJ).o
+	$(CC) $(CFLAGS) $^ -o $@
+	$(OBJDUMP) -axd $@ > $@.s
 
-$(TST_SC): get_shellcode.c | $(SC_OBJ)
-	gcc -g $^ -o $@
-	objdump -saxd $@ > $@.s
+$(SC_OBJ): $(SC_OBJ).c
+	$(CC) -static  $^ -o $@
+	$(OBJDUMP) -saxd $@ > $@.s
+
+$(TST_SC): $(TST_SC).c | $(SC_OBJ)
+	$(CC) $^ -o $@
+	$(OBJDUMP) -saxd $@ > $@.s
 
 clean:
-	rm -rf $(TST_OBJ) $(SC_OBJ) $(TST_SC) *.s
+	rm -rf $(TST_OBJ) $(SC_OBJ) $(TST_SC) *.s *.o
 
 .PHONY: clean all
 

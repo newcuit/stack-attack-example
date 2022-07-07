@@ -29,3 +29,4 @@ clean:
 .PHONY: clean all
 
 # echo 0 > /proc/sys/kernel/randomize_va_space 
+# sysctl -w kernel.core_pattern=/var/crash/core.%u.%e.%p
